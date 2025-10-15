@@ -334,10 +334,6 @@ def ai_commander():
 def transaction():
     return render_template('transaction.html')
 
-@app.route('/api')
-def api():
-    return "Hello, API"
-
 #TRANSACTIONS CRUD
 @app.route('/add', methods=['GET', 'POST'])
 def add_transaction():
