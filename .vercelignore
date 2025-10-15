@@ -1,0 +1,17 @@
+# Exclude local virtual environments and build artifacts
+myenv/
+.venv/
+venv/
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+
+# Exclude local databases and caches
+transactions.db
+users.db
+*.sqlite
+*.sqlite3
+
+# Node-like directories (if present)
+node_modules/
