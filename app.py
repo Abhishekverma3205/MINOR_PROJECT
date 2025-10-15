@@ -1,5 +1,6 @@
 from flask import Flask, render_template, request, jsonify, redirect, url_for, session, flash
 import sqlite3
+import os
 import yfinance as yf
 from datetime import datetime, timedelta
 from flask_cors import CORS
@@ -10,8 +11,14 @@ app = Flask(__name__)
 app.secret_key = "supersecretkey"
 CORS(app)
 
-DB_PATH = "transactions.db"
-USER_DB = "users.db"
+# Use ephemeral storage on Vercel to avoid read-only filesystem errors
+IS_VERCEL = os.environ.get("VERCEL") is not None
+if IS_VERCEL:
+    DB_PATH = "/tmp/transactions.db"
+    USER_DB = "/tmp/users.db"
+else:
+    DB_PATH = "transactions.db"
+    USER_DB = "users.db"
 
 #DB SETUP
 def init_transactions_db():
@@ -179,7 +186,7 @@ def get_historical_data(symbol: str, period: str = '1mo'):
         return []
     
     # ------------ CRYPTO DB CONFIG ------------
-CRYPTO_DB_PATH = "transactions.db" # Using the same DB file is fine
+CRYPTO_DB_PATH = DB_PATH  # Use the same DB file, respects Vercel /tmp
 
 def init_crypto_db():
     """Initializes the table for blockchain transactions."""
@@ -207,6 +214,8 @@ def save_blockchain_transaction():
         return jsonify({'status': 'error', 'message': 'Missing data'}), 400
 
     try:
+        # Ensure the table exists (idempotent)
+        init_crypto_db()
         with sqlite3.connect(CRYPTO_DB_PATH) as conn:
             c = conn.cursor()
             c.execute(
@@ -227,6 +236,8 @@ def save_blockchain_transaction():
 def get_blockchain_transactions(address):
     """Fetches all transactions involving a specific address."""
     try:
+        # Ensure the table exists (idempotent)
+        init_crypto_db()
         with sqlite3.connect(CRYPTO_DB_PATH) as conn:
             conn.row_factory = sqlite3.Row
             c = conn.cursor()
@@ -321,7 +332,7 @@ def gst_calculator():
 
 @app.route('/emi')
 def emi():
-    return render_template('emi.html')
+    return render_template('EMI.html')
 
 @app.route('/SIP_ca')
 def SIP_ca():
